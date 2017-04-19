@@ -1,0 +1,28 @@
+Introduction
+============
+These are the prefetchers implemented for the first out of two course projects for the APA course (Advanced Processor Architecture) of MIRI master at UPC. 
+This project consist on develop a prefetcher with specific requirements and assumptions. For more informations please read the document placed at ./doc/DataPrefetching.pdf
+
+Description
+===========
+We have been followed the proposal done by Nesbut and Smith in the "Data Cache Prefetching Using a Global History Buffer". One of the main restriction that we have is that the maximum ammount of memory available for history is 32KB so using a history table could end up with a waste of resources. At this paper, Nesbit et al. propose the use of the Global History Buffers as a baseline from where you can build several prefetching algorithms. 
+
+As a circular buffer the GHB prefetching structure eliminates many of the problems associated with conventional tables. First, the GHB FIFO naturally gives table space priority to the most recent global history, thus eliminating the stale data problem. Firthermore, the GHB naturally allocates more chip-area to events that have occurred more recently and more often.
+Seond, the Index Table and GHB are sized separately. The Index Table only needs to be large enough to hold the working set of prefetch keys. Moreover Index Table entreis are realtively small; they contain a tag and a single pointer into GHB. The GHB has greater memory requirements, but is sized independently to hold a representative portion of the miss address stream.
+Last, the ordered gloal history can be used to create more sophisticated prefetching methods.
+(3.3 Implementation, Data Cache Prefetching Using a Global History Buffer, Nesbut and Smith)
+
+Files description
+=================
+skeleton.c
+----------
+Containts the description of the interface that any prefetched have to implement in order to be executed by the simulator.
+
+ghb_base.c
+ghb_base.h
+----------
+There are the files devoted to contain the generic implementation of the global history buffer. As it has been explained, GHB could be used by several algorithms, so every algorithm will use different data at ghb entries and different data for indexing. e.g. Stride prefetching is using the PC (program counter) and recording strides meanwhile Markov use miss address as index and recording address in order to maintain address correlations.
+
+ghb_markov.c
+------------
+Containts the Markov prefetching algorithm but using GHB. This prefetcher is also described at paper discussed above.
