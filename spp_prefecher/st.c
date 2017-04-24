@@ -55,7 +55,7 @@ void st_update(16BIT_FIELD tag, 6BIT_FIELD offset)
     }
 
     4BIT_FIELD new_delta = offset-entry->last_offset;
-    entry->signature = (entry->signature << 3) ^ delta;
+    entry->signature = (entry->signature << 3) ^ new_delta;
     entry->last_offset = offset;
 
     update_lru_by_touch(entry);
@@ -118,9 +118,9 @@ void update_lru_by_touch(signature_table_entry_t *entry)
     int i;
     for (i=0; i<N_ST_ENTRIES; ++i)
     {
-        if (ST[0].lru < entry->lru)
+        if (ST[i].lru < entry->lru)
         {
-            ST[0].lru += 1;
+            ST[i].lru += 1;
         }
     }
     entry->lru=0;
