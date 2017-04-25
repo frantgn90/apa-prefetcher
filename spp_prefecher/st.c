@@ -30,7 +30,7 @@ void st_init()
     }
 }
 
-BOOL st_get_signature(16BIT_FIELD tag, SIGNATURE_FIELD *signature)
+BOOL st_get_signature(16BIT_FIELD tag, SIGNATURE_FIELD *signature, 6BIT_FIELD *last_offset)
 {
     signature_table_entry_t *entry;
     BOOL exists = st_get_entry(tag, entry);
@@ -38,6 +38,7 @@ BOOL st_get_signature(16BIT_FIELD tag, SIGNATURE_FIELD *signature)
     if (exists)
     {
         signature = &entry->signature;
+        last_offset = &entry->last_offset;
         update_lru_by_touch(entry);
         return TRUE;
     }

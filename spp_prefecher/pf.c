@@ -85,3 +85,8 @@ void pf_increment_useful(6BIT_FIELD tag)
         }
     }
 }
+
+double pf_get_alfa()
+{
+    return c_useful/c_total;
+}

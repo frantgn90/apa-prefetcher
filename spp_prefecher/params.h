@@ -23,3 +23,7 @@ typedef 12BIT_FIELD SIGNATURE_FIELD
 #define N_PT_ENTRIES 512
 #define N_PT_DELTAS_PER_ENTRY 4
 #define N_PF_ENTRIES 1024
+
+/* Threshold */
+#define Tp 0.7 // Confident threshold to prefetch
+#define Tf 0.5 // Confident threshold  to prefetch to L2 or LLC

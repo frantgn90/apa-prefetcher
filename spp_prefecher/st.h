@@ -16,5 +16,5 @@ signature_table_entry_t ST[N_ST_ENTRIES];
 /* Exposed functions */
 
 void st_init();
-BOOL st_get_signature(16BIT_FIELD tag, 12BIT_FIELD *signature);
+BOOL st_get_signature(16BIT_FIELD tag, 12BIT_FIELD *signature, 6BIT_FIELD *last_offset);
 void st_update(16BIT_FIELD tag, 6BIT_FIELD offset);

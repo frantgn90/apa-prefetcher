@@ -26,3 +26,4 @@ void pf_insert_entry(6BIT_FIELD tag);
 void pf_set_useful(6BIT_FIELD tag);
 void pf_increment_total();
 void pf_increment_useful(6BIT_FIELD tag);
+double pf_get_alfa();
