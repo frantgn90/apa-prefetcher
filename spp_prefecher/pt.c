@@ -15,6 +15,11 @@
 
 void pt_init()
 {
+    assert (PT_CSIG, sizeof(PT_CSIG_SIZE));
+    assert (PT_CDELTA, sizeof(PT_CDELTA_SIZE)); 
+    assert (PT_DELTA, sizeof(PT_DELTA_SIZE));
+    assert (PT_VALID, sizeof(PT_VALID_SIZE));
+
     int i;
     for (i=0; i<N_PT_ENTRIES; ++i)
     {
@@ -28,28 +33,28 @@ void pt_init()
     }
 }
 
-void pt_update(SIGNATURE_FIELD signature, 7BIT_FIELD delta)
+void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
 {
-    int index=signature%N_PT_ENTRIES;
+    unsigned int index=signature%N_PT_ENTRIES;
     pattern_table_entry_t *entry=&PT[index];
 
     BOOL done=FALSE;
-    4BIT_FIELD min_c_delta=0xF;
-    int min_c_delta_index=NULL;
+    PT_DELTA min_c_delta=(1<<PT_DELTA_SIZE)-1;
+    unsigned int min_c_delta_index=NULL;
 
     int j;
     for (j=0; j<N_PT_DELTAS_PER_ENTRY && !done; ++j)
     {
         if (!entry->valid[j])
         {
-            entry->delta[j]=delta;
+            entry->delta[j]=MASK(delta,PT_DELTA_SIZE);
             entry->c_delta[j]=1;
             entry->valid=1;
             done=TRUE;
         }
         else if (entry->delta[j] == delta)
         {
-            entry->c_delta[j]+=1;
+            entry->c_delta[j]=INCREMENT(entry->c_delta[j],PT_CDELTA_SIZE);
             done=TRUE;
         }
         else if (entry->delta[j] < min_c_delta)
@@ -63,26 +68,27 @@ void pt_update(SIGNATURE_FIELD signature, 7BIT_FIELD delta)
     {
         assert(min_c_delta_index != NULL);
         entry->c_sig-=entry->c_delta[min_c_delta_index];
-        entry->delta[min_c_delta_index]=delta;
+        entry->delta[min_c_delta_index]=MASK(delta,PT_DELTA_SIZE);
         entry->c_delta[min_c_delta_index]=1;
     }
 
-    entry->c_sig+=1;
+    entry->c_sig=INCREMENT(entry->c_sig, PT_CSIG_SIZE);
 }
 
-int pt_get_deltas(SIGNATURE_FIELD signature, double c_threshold, 
-        7BIT_FIELD *delta, double *c)
+int pt_get_deltas(ST_SIGNATURE signature, 
+        unsigned double c_threshold, PT_DELTA *delta, unsigned double *c)
 {
-    int index=signature%N_PT_ENTRIES;
+    int index=signature % N_PT_ENTRIES;
     pattern_table_entry_t *entry=&PT[index];
-    delta = malloc(N_PT_DELTAS_PER_ENTRY*sizeof(4BIT_FIELD));
-    c = malloc(N_PT_DELTAS_PER_ENTRY*sizeof(double));
+
+    delta = malloc(N_PT_DELTAS_PER_ENTRY*sizeof(PT_DELTA));
+    c = malloc(N_PT_DELTAS_PER_ENTRY*sizeof(unsigned double));
     int n_deltas=0;
 
     int i;
     for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
     {
-        double confidence=entry->c_delta[i]/entry->c_sig;
+        unsigned double confidence=entry->c_delta[i]/entry->c_sig;
         if (confidence >= c_threshold)
         {
             delta[n_deltas]=entry->delta[i];
