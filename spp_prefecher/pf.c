@@ -10,18 +10,22 @@
 
 void pf_init()
 {
+    assert (PF_VALID_SIZE <= sizeof(PF_VALID)<<3);
+    assert (PF_TAG_SIZE <= sizeof(PF_TAG)<<3);
+    assert (PF_USEFUL_SIZE <= sizeof(PF_USEFUL)<<3);
+
     int i;
     for (i=0; i<N_PF_ENTRIES; ++i)
     {
         PF[i].valid=0;
         PF[i].useful=0;
     }
-    pf_preemptions=0;
+    pf_collisions=0;
     c_total=0;
     c_useful=0;
 }
 
-void pf_remove_entry(6BIT_FIELD tag)
+void pf_remove_entry(PF_TAG tag)
 {
     prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
     if (entry->tag == tag) // Because this tag could had been preempted
@@ -30,13 +34,13 @@ void pf_remove_entry(6BIT_FIELD tag)
     }
 }
 
-BOOL pf_exist_entry(6BIT_FIELD tag)
+BOOL pf_exist_entry(PF_TAG tag)
 {
     prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
     return entry->valid && entry->tag==tag;
 }
 
-void pf_insert_entry(6BIT_FIELD tag)
+void pf_insert_entry(PF_TAG tag)
 {
     prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
 
@@ -54,11 +58,11 @@ void pf_insert_entry(6BIT_FIELD tag)
         entry->valid=1;
     }
 
-    entry->tag=tag;
+    entry->tag=LRB_MASK(tag, PF_TAG_SIZE);
     entry->useful=0;
 }
 
-void pf_set_useful(6BIT_FIELD tag)
+void pf_set_useful(PF_TAG tag)
 {
     prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
     if (entry->tag==tag)
@@ -69,10 +73,10 @@ void pf_set_useful(6BIT_FIELD tag)
 
 void pf_increment_total()
 {
-    c_total+=1;
+    c_total=INCREMENT(c_total, PF_AC_CTOTAL_SIZE);
 }
 
-void pf_increment_useful(6BIT_FIELD tag)
+void pf_increment_useful(PF_TAG tag)
 {
     prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
     assert (entry->valid==1);
@@ -81,7 +85,7 @@ void pf_increment_useful(6BIT_FIELD tag)
         if (!entry->useful)
         {
             entry->useful=1;
-            c_useful+=1;
+            c_useful=INCREMENT(c_useful, PF_AC_CUSEFUL_SIZE);
         }
     }
 }

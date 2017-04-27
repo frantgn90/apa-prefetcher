@@ -1,14 +1,17 @@
-// General
+#ifndef __PARAMS_H
+#define __PARAMS_H
 
+#include <stdlib.h>
 #include <assert.h>
 
 /* Utilities */
 #define INCREMENT(var, size) (var+1 % (1<<size))
 #define LRB_MASK(var, size) (var & ((1<<size)-1))
 
-typedef unsigned int BOOL;
 #define TRUE  1
 #define FALSE 0
+
+typedef unsigned int BOOL;
 
 /* Typedef for field sizes */
 typedef unsigned short ST_VALID;
@@ -26,16 +29,17 @@ typedef unsigned short PF_VALID;
 typedef unsigned short PF_TAG;
 typedef unsigned short PF_USEFUL;
 typedef unsigned short PF_AC_CTOTAL;
-typedef unsigned short PF_AC_USEFUL;
+typedef unsigned short PF_AC_CUSEFUL;
 
 typedef unsigned short GHB_SIGNATURE;
 typedef unsigned short GHB_CONFIDENCE;
 typedef unsigned short GHB_LAST_OFFSET;
 typedef unsigned short GHB_DELTA;
 
-typedef 12BIT_FIELD SIGNATURE_FIELD
-
 /* Data sizes */
+#define PAGE_ADDR_BITS 12 // 4KB
+#define BLOCK_ADDR_BITS 6 // 64B
+
 #define ST_VALID_SIZE 1
 #define ST_TAG_SIZE   16
 #define ST_LAST_OFFSET_SIZE 6
@@ -68,3 +72,5 @@ typedef 12BIT_FIELD SIGNATURE_FIELD
 /* Threshold */
 #define Tp 0.7 // Confident threshold to prefetch
 #define Tf 0.5 // Confident threshold  to prefetch to L2 or LLC
+
+#endif

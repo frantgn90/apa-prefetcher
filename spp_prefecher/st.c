@@ -14,17 +14,16 @@
 
 /* Not exposed functions */
 
-BOOL st_get_entry(16BIT_FIELD tag, signature_table_entry_t *entry);
-signature_table_entry_t* st_allocate_entry(16BIT_FIELD tag);
+BOOL st_get_entry(ST_TAG tag, signature_table_entry_t **entry);
+signature_table_entry_t* st_allocate_entry(ST_TAG tag);
 void update_lru_by_touch(signature_table_entry_t *entry);
 
 void st_init()
 {
-    assert (ST_SIGNATURE_SIZE <= sizeof(ST_SIGNATURE_SIZE));
-    assert (ST_TAG_SIZE <= sizeof(ST_TAG_SIZE));
-    assert (ST_LAST_OFFSET_SIZE <= sizeof(ST_LAST_OFFSET));
-    assert (ST_SIGNATURE_SIZE <= sizeof(ST_SIGNATURE));
-    assert (ST_LRU_SIZE <= sizeof(ST_LRU));
+    assert (ST_SIGNATURE_SIZE <= sizeof(ST_SIGNATURE)<<3);
+    assert (ST_TAG_SIZE <= sizeof(ST_TAG)<<3);
+    assert (ST_LAST_OFFSET_SIZE <= sizeof(ST_LAST_OFFSET)<<3);
+    assert (ST_LRU_SIZE <= sizeof(ST_LRU)<<3);
 
     int i;
     for (i=0; i<N_ST_ENTRIES; ++i)
@@ -34,17 +33,18 @@ void st_init()
         ST[i].signature=0;
         ST[i].last_offset=0;
     }
+    st_collisions=0;
 }
 
 BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_offset)
 {
     signature_table_entry_t *entry;
-    BOOL exists = st_get_entry(tag, entry);
+    BOOL exists = st_get_entry(tag, &entry);
 
     if (exists)
     {
-        signature = &entry->signature;
-        last_offset = &entry->last_offset;
+        *signature = entry->signature;
+        *last_offset = entry->last_offset;
         update_lru_by_touch(entry);
         return TRUE;
     }
@@ -54,7 +54,7 @@ BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_
 void st_update(ST_TAG tag, ST_LAST_OFFSET offset)
 {
     signature_table_entry_t *entry;
-    BOOL exists = st_get_entry(tag, entry);
+    BOOL exists = st_get_entry(tag, &entry);
 
     if (!exists)
     {
@@ -64,23 +64,36 @@ void st_update(ST_TAG tag, ST_LAST_OFFSET offset)
     PT_DELTA new_delta = offset - entry->last_offset;
     new_delta = LRB_MASK(new_delta,PT_DELTA_SIZE);
 
-    ST_SIGNATURE new_signature = (entry->signature << PT_DELTA_SIZE-1) ^ new_delta;
+    ST_SIGNATURE new_signature = (entry->signature << (PT_DELTA_SIZE-1)) ^ new_delta;
     entry->signature = LRB_MASK(new_signature, ST_SIGNATURE_SIZE);
     entry->last_offset = LRB_MASK(offset, ST_LAST_OFFSET_SIZE);
 
     update_lru_by_touch(entry);
 }
+
+unsigned int st_used_entries()
+{
+    unsigned int result=0;
+
+    int i;
+    for (i=0; i<N_ST_ENTRIES; ++i)
+    {
+        if (ST[i].valid)
+            result++;
+    }
+    return result;
+}
     
 /* Not exposed functions */
 
-BOOL st_get_entry(ST_TAG tag, signature_table_entry_t *entry)
+BOOL st_get_entry(ST_TAG tag, signature_table_entry_t **entry)
 {
     int i;
     for (i=0; i<N_ST_ENTRIES; ++i)
     {
         if (ST[i].valid && ST[i].tag == tag)
         {
-            entry = &ST[i];
+            *entry = &ST[i];
             return TRUE;
         }
     }
@@ -100,7 +113,7 @@ signature_table_entry_t* st_allocate_entry(ST_TAG tag)
         {
             entry->tag=tag;
             entry->signature=0;
-            entry->valid=1
+            entry->valid=1;
             return entry;
         }
 
@@ -114,6 +127,7 @@ signature_table_entry_t* st_allocate_entry(ST_TAG tag)
     least_used_entry->tag=tag;
     least_used_entry->last_offset=0; // not sure if needed
     least_used_entry->signature=0;   // not sure if needed
+    st_collisions++;
 
     return least_used_entry;
 }

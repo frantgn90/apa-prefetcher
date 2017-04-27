@@ -1,1 +1,7 @@
+INTRODUCTION
+============
 Prefetcher based on publication "Path Confidence Lookahead Prefetching", Kim et al.
+
+How to compile
+==============
+Just tipe `make`
