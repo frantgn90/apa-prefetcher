@@ -12,7 +12,7 @@ PIN_HOME=/home/jmartinez/Packages/pin-2.13-65163-gcc.4.4.7-linux
 
 PINTOOL_HOME=${DPC_HOME}/pintool/
 
-N_WARMUP_INSTR=100000
+N_WARMUP_INSTR=100
 N_TRACE_INSTR=200000
 
 PIN_ARGS="-ifeellucky"
