@@ -7,6 +7,7 @@
 /* Utilities */
 #define INCREMENT(var, size) (var+1 % (1<<size))
 #define LRB_MASK(var, size) (var & ((1<<size)-1))
+#define ADDR_TO_PAGE(addr) (addr>>PAGE_BLOCK_OFFSETS)
 
 #define TRUE  1
 #define FALSE 0
@@ -37,8 +38,9 @@ typedef unsigned short GHB_LAST_OFFSET;
 typedef unsigned short GHB_DELTA;
 
 /* Data sizes */
-#define PAGE_ADDR_BITS 12 // 4KB
-#define BLOCK_ADDR_BITS 6 // 64B
+#define PAGE_OFFSET_BITS 6 // 4KB / 64B = 64 blocks/page => 6 bits
+#define BLOCK_OFFSET_BITS 6 // 64B => 6 bits
+#define PAGE_BLOCK_OFFSETS (PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS)
 
 #define ST_VALID_SIZE 1
 #define ST_TAG_SIZE   16
@@ -68,6 +70,7 @@ typedef unsigned short GHB_DELTA;
 #define N_PT_ENTRIES 512
 #define N_PT_DELTAS_PER_ENTRY 4
 #define N_PF_ENTRIES 1024
+#define N_PF_ADDR_BITS 10 // need 10 for 1024, pf is direct mapped
 
 /* Threshold */
 #define Tp 0.7 // Confident threshold to prefetch

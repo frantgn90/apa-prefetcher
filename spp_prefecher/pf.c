@@ -25,29 +25,33 @@ void pf_init()
     c_useful=0;
 }
 
-void pf_remove_entry(PF_TAG tag)
+void pf_remove_entry(unsigned long long pf_addr)
 {
-    prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
+    unsigned int index = ADDR_TO_INDEX(pf_addr);
+    PF_TAG tag = ADDR_TO_TAG(pf_addr);
+
+    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
     if (entry->tag == tag) // Because this tag could had been preempted
     {
         entry->valid=0;
     }
 }
 
-BOOL pf_exist_entry(PF_TAG tag)
+BOOL pf_exist_entry(unsigned long long pf_addr)
 {
-    prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
+    unsigned int index = ADDR_TO_INDEX(pf_addr);
+    PF_TAG tag = ADDR_TO_TAG(pf_addr);
+
+    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
     return entry->valid && entry->tag==tag;
 }
 
-void pf_insert_entry(PF_TAG tag)
+void pf_insert_entry(unsigned long long pf_addr)
 {
-    prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
+    unsigned int index = ADDR_TO_INDEX(pf_addr);
+    PF_TAG tag = ADDR_TO_TAG(pf_addr);
 
-    // If this assertion fails it means that we will prefetch same
-    // location twice. It should be avoided.
-    //
-    assert (entry->tag != tag);
+    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
 
     if (entry->valid)
     {
@@ -58,13 +62,16 @@ void pf_insert_entry(PF_TAG tag)
         entry->valid=1;
     }
 
-    entry->tag=LRB_MASK(tag, PF_TAG_SIZE);
+    entry->tag=tag;
     entry->useful=0;
 }
 
-void pf_set_useful(PF_TAG tag)
+void pf_set_useful(unsigned long long pf_addr)
 {
-    prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
+    unsigned int index = ADDR_TO_INDEX(pf_addr);
+    PF_TAG tag = ADDR_TO_TAG(pf_addr);
+
+    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
     if (entry->tag==tag)
     {
         entry->useful=1;
@@ -76,11 +83,14 @@ void pf_increment_total()
     c_total=INCREMENT(c_total, PF_AC_CTOTAL_SIZE);
 }
 
-void pf_increment_useful(PF_TAG tag)
+void pf_increment_useful(unsigned long long pf_addr)
 {
-    prefetch_filter_entry_t *entry=&PF[tag%N_PF_ENTRIES];
-    assert (entry->valid==1);
-    if (entry->tag == tag)
+    unsigned int index = ADDR_TO_INDEX(pf_addr);
+    PF_TAG tag = ADDR_TO_TAG(pf_addr);
+
+    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
+
+    if (entry->valid && entry->tag == tag)
     {
         if (!entry->useful)
         {
@@ -92,5 +102,8 @@ void pf_increment_useful(PF_TAG tag)
 
 double pf_get_alfa()
 {
+    if (c_total == 0)
+        return 1;
+
     return c_useful/c_total;
 }

@@ -4,7 +4,7 @@
  * Signature table
  * Is designed tu capture memory access patterns within 4KB physical pages, and
  * to compress the previous deltas in taht page into a 12-bit history signature.
- * The ST tracks the 256 most recently accessed apges ,and sotres the last block
+ * The ST tracks the 256 most recently accessed pages ,and sotres the last block
  * accessd in each of those pages in order to calculate the delta signature of
  * the current memory access.
  *
