@@ -36,26 +36,31 @@ void l2_prefetcher_initialize(int cpu_num)
 void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned long long int ip, int cache_hit)
 {
     unsigned long long int page = (addr>>(PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS));
-    unsigned long long int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), BLOCK_OFFSET_BITS);
+    unsigned long long int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
 
     ST_SIGNATURE signature;
     ST_LAST_OFFSET last_block;
     ST_TAG tag=LRB_MASK(page, ST_TAG_SIZE);
 
+    // 1. Who to update at PT
     BOOL exist=st_get_signature(tag, &signature, &last_block);
 
     if (exist)
     {
         PT_DELTA new_delta=LRB_MASK(block-last_block, PT_DELTA_SIZE);
+        // 2. Update pattern with last access
         pt_update(signature, new_delta);
+        // 3. Update signature
         st_update(tag, block);
+        // 4. Get last signature to perform the prefetching
         st_get_signature(tag, &signature, &last_block /* dummy */);
 
         PT_DELTA *delta;
         double *confidence;
+        // 5. Get prediction
         unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
 
-        // There is no Pd_prev
+        // 6. Perform prefetch. There is no Pd_prev, so is 1
         perform_prefetches(delta, confidence, n_deltas, 1, signature, addr); 
 
         free(delta);

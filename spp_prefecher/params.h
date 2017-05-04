@@ -22,7 +22,7 @@ typedef unsigned short ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned short PT_CSIG;
-typedef unsigned short PT_CDELTA;
+typedef          short PT_CDELTA;
 typedef unsigned short PT_DELTA;
 typedef unsigned short PT_VALID;
 
