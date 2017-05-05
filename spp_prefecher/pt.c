@@ -90,7 +90,7 @@ int pt_get_deltas(ST_SIGNATURE signature, double c_threshold, PT_DELTA **delta, 
     {
         if (entry->valid[i])
         {
-            double confidence=entry->c_delta[i]/entry->c_sig;
+            double confidence=entry->c_delta[i]/(double)entry->c_sig;
             if (confidence >= c_threshold)
             {
                 (*delta)[n_deltas]=entry->delta[i];

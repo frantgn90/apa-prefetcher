@@ -5,7 +5,7 @@
 #include <assert.h>
 
 /* Utilities */
-#define INCREMENT(var, size) (var+1 % (1<<size))
+#define INCREMENT(var, size) ((var+1) & ((1<<size)-1))
 #define LRB_MASK(var, size) (var & ((1<<size)-1))
 #define ADDR_TO_PAGE(addr) (addr>>PAGE_BLOCK_OFFSETS)
 
@@ -18,7 +18,7 @@ typedef unsigned int BOOL;
 typedef unsigned short ST_VALID;
 typedef unsigned short ST_TAG;
 typedef unsigned short ST_LAST_OFFSET;
-typedef unsigned short ST_SIGNATURE;
+typedef unsigned int   ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned short PT_CSIG;
@@ -73,7 +73,10 @@ typedef unsigned short GHB_DELTA;
 #define N_PF_ADDR_BITS 10 // need 10 for 1024, pf is direct mapped
 
 /* Threshold */
-#define Tp 0.7 // Confident threshold to prefetch
-#define Tf 0.5 // Confident threshold  to prefetch to L2 or LLC
+#define Tp 0.8 // Confident threshold to prefetch
+#define Tf 0.9 // Confident threshold  to prefetch to L2 or LLC
+
+/* stats */
+unsigned int stats_filtered_pref;
 
 #endif

@@ -36,8 +36,6 @@ int main(int argc, char **argv)
             
             PT_DELTA *deltas;
             double *c;
-            deltas = malloc(sizeof(PT_DELTA*));
-            c = malloc(sizeof(double*));
 
             int n_deltas = pt_get_deltas(signs[i], 0, &deltas, &c);
 
@@ -48,6 +46,8 @@ int main(int argc, char **argv)
                 printf("%d:%f,", deltas[k], c[k]);
             }
             printf("}\n");
+            free(deltas);
+            free(c);
         }
     }
 }

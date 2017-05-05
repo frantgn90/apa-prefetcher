@@ -20,13 +20,15 @@
 
 
 /****** Helpers prototype *******/
-void perform_prefetches(PT_DELTA *delta, double *confidence, 
+int perform_prefetches(PT_DELTA *delta, double *confidence, 
         unsigned int n_deltas, double Pd_prev, ST_SIGNATURE base_signature,
-        unsigned long long int addr);
+        unsigned long long int addr, int ll);
 
 
 void l2_prefetcher_initialize(int cpu_num)
 {
+    stats_filtered_pref=0;
+
     st_init();
     pt_init();
     pf_init();
@@ -35,6 +37,7 @@ void l2_prefetcher_initialize(int cpu_num)
 
 void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned long long int ip, int cache_hit)
 {
+    pf_increment_useful(addr);
     unsigned long long int page = (addr>>(PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS));
     unsigned long long int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
 
@@ -61,7 +64,8 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
 
         // 6. Perform prefetch. There is no Pd_prev, so is 1
-        perform_prefetches(delta, confidence, n_deltas, 1, signature, addr); 
+        int lookahead_level=perform_prefetches(delta, confidence, 
+                n_deltas, 1, signature, addr, 1); 
 
         free(delta);
         free(confidence);
@@ -72,7 +76,6 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         st_update(tag, block);
     }
 
-    pf_increment_useful(addr);
 }
 
 void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, int prefetch, unsigned long long int evicted_addr)
@@ -83,11 +86,10 @@ void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, i
 void l2_prefetcher_heartbeat_stats(int cpu_num)
 {
   printf("Prefetcher heartbeat stats\n");
-  printf("ST used entries: %u\n", st_used_entries());
-  printf("ST replacements: %u\n", st_collisions);
-  printf("PT used entries: %u\n", pt_used_entries());
-  printf("PT replacements: %u\n", pt_collisions);
-  //printf("PF used entries: %d", pf_used_entries());
+  printf("c_useful=%d c_total=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
+  printf("filtered prefc=%u\n", stats_filtered_pref);
+  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
+  printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
 }
 
 void l2_prefetcher_warmup_stats(int cpu_num)
@@ -102,12 +104,12 @@ void l2_prefetcher_final_stats(int cpu_num)
 
 /******* Helpers ********/
 
-void perform_prefetches(PT_DELTA *delta, double *confidence, 
+int perform_prefetches(PT_DELTA *delta, double *confidence, 
         unsigned int n_deltas, double Pd_prev, ST_SIGNATURE base_signature,
-        unsigned long long int addr)
+        unsigned long long int addr, int ll)
 {
     if (n_deltas == 0)
-        return;
+        return ll-1;
 
     /* In addition to throttling when Pd falls below the Tp, SPP also stops
      * prefetching if there are not enough L2 read queue resources.
@@ -118,7 +120,7 @@ void perform_prefetches(PT_DELTA *delta, double *confidence,
     int l2_read_queue_occ = get_l2_read_queue_occupancy(0);
 
     if (l2_read_queue_occ < (3/4)*L2_READ_QUEUE_SIZE)
-        return;
+        return ll-1;
 
     // Confidence modulation
     double alfa = pf_get_alfa();
@@ -131,7 +133,14 @@ void perform_prefetches(PT_DELTA *delta, double *confidence,
     for(i=0; i<n_deltas; ++i)
     {   
         double Pd = confidence[i]*Pd_prev;
-        if (alfa*Pd < Tp)
+
+        double Conf;
+        if (ll==1) /* If is not lookeahead, alfa is not needed */
+            Conf=Pd;
+        else
+            Conf=Pd*alfa;
+
+        if (Conf < Tp)
             continue;
         
         int fill_level;
@@ -146,26 +155,38 @@ void perform_prefetches(PT_DELTA *delta, double *confidence,
 
         if (!pf_exist_entry(pf_addr) && same_page)
         {
-            if (Pd > highest_pd)
+            int res=l2_prefetch_line(0, addr, pf_addr, fill_level);
+            if (res==1)
             {
-                highest_pd = Pd;
-                highest_pd_i = i;
-                highest_pd_addr = pf_addr;
-            }
+                if (Pd > highest_pd)
+                {
+                    highest_pd = Pd;
+                    highest_pd_i = i;
+                    highest_pd_addr = pf_addr;
+                }
 
-            l2_prefetch_line(0, addr, pf_addr, fill_level);
-            pf_insert_entry(pf_addr);
-            pf_increment_total();
+                pf_insert_entry(pf_addr);
+                pf_increment_total();
+            }
+            else
+            {
+                printf("****** WTF ******\n");
+            }
         }
         else if (!same_page)
         {
-            // TODO: GHR Time!
+            //printf("****** GHR TIME ******\n");
+        }
+        else if (pf_exist_entry(pf_addr))
+        {
+            stats_filtered_pref+=1;
         }
     }
 
     /* SPP only generates a single lookahead signature, choosing the
      * candidate with the highest confidence
      */
+    int res_ll=ll;
     if (highest_pd > 0)
     {
         ST_SIGNATURE new_signature = (base_signature << (PT_DELTA_SIZE-1))\
@@ -175,7 +196,8 @@ void perform_prefetches(PT_DELTA *delta, double *confidence,
         unsigned int new_n_deltas = pt_get_deltas(new_signature, Tp, 
                 &new_delta, &new_confidence);
 
-        perform_prefetches(new_delta, new_confidence, new_n_deltas, highest_pd,
-                new_signature, highest_pd_addr);
+        res_ll=perform_prefetches(new_delta, new_confidence, new_n_deltas, 
+                highest_pd, new_signature, highest_pd_addr, ll+1);
     }
+    return res_ll;
 }

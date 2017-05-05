@@ -80,7 +80,14 @@ void pf_set_useful(unsigned long long pf_addr)
 
 void pf_increment_total()
 {
+    PF_AC_CTOTAL prev_total = c_total;
     c_total=INCREMENT(c_total, PF_AC_CTOTAL_SIZE);
+
+    if (prev_total > c_total) /* overflow detection */
+    {
+        c_total/=c_useful;
+        c_useful=1;
+    }
 }
 
 void pf_increment_useful(unsigned long long pf_addr)
@@ -105,5 +112,5 @@ double pf_get_alfa()
     if (c_total == 0)
         return 1;
 
-    return c_useful/c_total;
+    return c_useful/(double)c_total;
 }

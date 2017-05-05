@@ -103,7 +103,7 @@ BOOL st_get_entry(ST_TAG tag, signature_table_entry_t **entry)
 signature_table_entry_t* st_allocate_entry(ST_TAG tag)
 {
     signature_table_entry_t* least_used_entry;
-    ST_LRU max_lru;
+    ST_LRU max_lru=0;
 
     int i;
     for (i=0; i<N_ST_ENTRIES; ++i)
