@@ -32,10 +32,8 @@ typedef unsigned short PF_USEFUL;
 typedef unsigned short PF_AC_CTOTAL;
 typedef unsigned short PF_AC_CUSEFUL;
 
-typedef unsigned short GHB_SIGNATURE;
-typedef unsigned short GHB_CONFIDENCE;
-typedef unsigned short GHB_LAST_OFFSET;
-typedef unsigned short GHB_DELTA;
+typedef unsigned short GHR_CONFIDENCE;
+typedef unsigned short GHR_VALID;
 
 /* Data sizes */
 #define PAGE_OFFSET_BITS 6 // 4KB / 64B = 64 blocks/page => 6 bits
@@ -59,22 +57,22 @@ typedef unsigned short GHB_DELTA;
 #define PF_AC_CTOTAL_SIZE 10
 #define PF_AC_CUSEFUL_SIZE 10
 
-#define GHR_SIGNATURE_SIZE 12
 #define GHR_CONFIDENCE_SIZE 8
-#define GHR_LAST_OFFSET_SIZE 6
-#define GHR_DELTA_SIZE 7
-
+#define GHR_VALID_SIZE 1
 
 /* Structure sizes */
-#define N_ST_ENTRIES 256
+#define N_ST_ENTRIES 512
 #define N_PT_ENTRIES 512
 #define N_PT_DELTAS_PER_ENTRY 4
 #define N_PF_ENTRIES 1024
 #define N_PF_ADDR_BITS 10 // need 10 for 1024, pf is direct mapped
+#define N_GHR_ENTRIES 8
 
 /* Threshold */
-#define Tp 0.8 // Confident threshold to prefetch
-#define Tf 0.9 // Confident threshold  to prefetch to L2 or LLC
+#define Tp 0.6 // Confident threshold to prefetch
+#define Tf 0.85 // Confident threshold  to prefetch to L2 or LLC
+
+#define MAX_PF_DEPTH 4
 
 /* stats */
 unsigned int stats_filtered_pref;

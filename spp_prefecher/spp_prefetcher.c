@@ -22,7 +22,7 @@
 /****** Helpers prototype *******/
 int perform_prefetches(PT_DELTA *delta, double *confidence, 
         unsigned int n_deltas, double Pd_prev, ST_SIGNATURE base_signature,
-        unsigned long long int addr, int ll);
+        unsigned long long int addr, int ll, ST_LAST_OFFSET last_offset);
 
 
 void l2_prefetcher_initialize(int cpu_num)
@@ -56,23 +56,24 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         // 3. Update signature
         st_update(tag, block);
         // 4. Get last signature to perform the prefetching
-        st_get_signature(tag, &signature, &last_block /* dummy */);
+        ST_LAST_OFFSET dummy;
+        st_get_signature(tag, &signature, &dummy);
 
+        // 5. Get prediction
         PT_DELTA *delta;
         double *confidence;
-        // 5. Get prediction
         unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
 
         // 6. Perform prefetch. There is no Pd_prev, so is 1
         int lookahead_level=perform_prefetches(delta, confidence, 
-                n_deltas, 1, signature, addr, 1); 
+                n_deltas, 1, signature, addr, 1, last_block); 
 
         free(delta);
         free(confidence);
     }
     else
     {
-        // Just update st_update with the new signature
+        /*** GHR time ***/
         st_update(tag, block);
     }
 
@@ -106,7 +107,7 @@ void l2_prefetcher_final_stats(int cpu_num)
 
 int perform_prefetches(PT_DELTA *delta, double *confidence, 
         unsigned int n_deltas, double Pd_prev, ST_SIGNATURE base_signature,
-        unsigned long long int addr, int ll)
+        unsigned long long int addr, int ll, ST_LAST_OFFSET last_offset)
 {
     if (n_deltas == 0)
         return ll-1;
@@ -117,9 +118,11 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
      * queue entry becomes less than the number of L1 MSHR
      */
 
-    int l2_read_queue_occ = get_l2_read_queue_occupancy(0);
+    if (ll > MAX_PF_DEPTH)
+        return ll-1;
 
-    if (l2_read_queue_occ < (3/4)*L2_READ_QUEUE_SIZE)
+    int l2_read_queue_occ = get_l2_read_queue_occupancy(0);
+    if (l2_read_queue_occ > (1/2)*L2_READ_QUEUE_SIZE)
         return ll-1;
 
     // Confidence modulation
@@ -134,13 +137,10 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
     {   
         double Pd = confidence[i]*Pd_prev;
 
-        double Conf;
-        if (ll==1) /* If is not lookeahead, alfa is not needed */
-            Conf=Pd;
-        else
-            Conf=Pd*alfa;
+        if (ll > 1)
+            Pd=Pd*alfa;
 
-        if (Conf < Tp)
+        if (Pd < Tp)
             continue;
         
         int fill_level;
@@ -153,34 +153,42 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         unsigned long long int pf_addr = addr+(delta[i]<<BLOCK_OFFSET_BITS);
         BOOL same_page = (ADDR_TO_PAGE(addr) == ADDR_TO_PAGE(pf_addr));
 
+        /*
+         * Note that SPP does not stop looking even further ahead for
+         * more prefetch candidates after coming to the end of a page
+         * and updating the GHR.
+         */
+        if (Pd > highest_pd)
+        {
+            highest_pd = Pd;
+            highest_pd_i = i;
+            highest_pd_addr = pf_addr;
+        }
+
         if (!pf_exist_entry(pf_addr) && same_page)
         {
             int res=l2_prefetch_line(0, addr, pf_addr, fill_level);
-            if (res==1)
-            {
-                if (Pd > highest_pd)
-                {
-                    highest_pd = Pd;
-                    highest_pd_i = i;
-                    highest_pd_addr = pf_addr;
-                }
+    
+            pf_insert_entry(pf_addr);
+            pf_increment_total();
 
-                pf_insert_entry(pf_addr);
-                pf_increment_total();
-            }
-            else
+            if (res != 1)
             {
                 printf("****** WTF ******\n");
             }
         }
-        else if (!same_page)
+        else if (!same_page && ll == 1) /* Not lookahead */
         {
-            //printf("****** GHR TIME ******\n");
+            /* 
+             * When there is a pretech request that goes beyond the current
+             * page, a conventional streaming prefetcher must stop prefetching
+             * because it is impossible to predict the next phyisical page number.
+             * So we have to update the ghr
+             */
+            ghr_update(base_signature, Pd, last_offset, delta[i]);
         }
         else if (pf_exist_entry(pf_addr))
-        {
             stats_filtered_pref+=1;
-        }
     }
 
     /* SPP only generates a single lookahead signature, choosing the
@@ -197,7 +205,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
                 &new_delta, &new_confidence);
 
         res_ll=perform_prefetches(new_delta, new_confidence, new_n_deltas, 
-                highest_pd, new_signature, highest_pd_addr, ll+1);
+                highest_pd, new_signature, highest_pd_addr, ll+1, last_offset);
     }
     return res_ll;
 }

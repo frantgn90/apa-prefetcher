@@ -15,10 +15,10 @@
 
 void pt_init()
 {
-    assert (PT_CSIG_SIZE <= sizeof(PT_CSIG_SIZE)<<3);
-    assert (PT_CDELTA_SIZE <= sizeof(PT_CDELTA_SIZE)<<3); 
-    assert (PT_DELTA_SIZE <= sizeof(PT_DELTA_SIZE)<<3);
-    assert (PT_VALID_SIZE <= sizeof(PT_VALID_SIZE)<<3);
+    assert (PT_CSIG_SIZE <= sizeof(PT_CSIG)<<3);
+    assert (PT_CDELTA_SIZE <= sizeof(PT_CDELTA)<<3); 
+    assert (PT_DELTA_SIZE <= sizeof(PT_DELTA)<<3);
+    assert (PT_VALID_SIZE <= sizeof(PT_VALID)<<3);
 
     int i;
     for (i=0; i<N_PT_ENTRIES; ++i)
