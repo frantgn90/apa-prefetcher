@@ -51,6 +51,21 @@ BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_
     return FALSE;
 }
 
+void st_set_signature(ST_TAG tag, ST_SIGNATURE signature, ST_LAST_OFFSET last_offset)
+{
+    signature_table_entry_t *entry;
+    BOOL exists=st_get_entry(tag, &entry);
+
+    if (!exists)
+    {
+        entry=st_allocate_entry(tag);
+    }
+    entry->signature=signature;
+    entry->last_offset=last_offset;
+    update_lru_by_touch(entry);
+}
+
+
 void st_update(ST_TAG tag, ST_LAST_OFFSET offset)
 {
     signature_table_entry_t *entry;

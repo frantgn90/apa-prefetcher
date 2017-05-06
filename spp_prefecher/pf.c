@@ -112,5 +112,10 @@ double pf_get_alfa()
     if (c_total == 0)
         return 1;
 
-    return c_useful/(double)c_total;
+    double alfa=c_useful/(double)c_total;
+    if (alfa > 1) /* because overflow */
+        alfa=1;
+
+    return alfa;
+
 }

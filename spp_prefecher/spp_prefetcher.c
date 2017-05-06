@@ -32,7 +32,7 @@ void l2_prefetcher_initialize(int cpu_num)
     st_init();
     pt_init();
     pf_init();
-    //ghr_init();
+    ghr_init();
 }
 
 void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned long long int ip, int cache_hit)
@@ -73,10 +73,12 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
     }
     else
     {
-        /*** GHR time ***/
-        st_update(tag, block);
+        BOOL ghr_detect = ghr_get_signature(block, &signature);
+        if (ghr_detect)
+            st_set_signature(tag, signature, block);
+        else
+            st_update(tag, block);
     }
-
 }
 
 void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, int prefetch, unsigned long long int evicted_addr)
@@ -91,6 +93,8 @@ void l2_prefetcher_heartbeat_stats(int cpu_num)
   printf("filtered prefc=%u\n", stats_filtered_pref);
   printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
   printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
+  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
+          ghr_collisions, ghr_predictions);
 }
 
 void l2_prefetcher_warmup_stats(int cpu_num)
@@ -118,11 +122,12 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
      * queue entry becomes less than the number of L1 MSHR
      */
 
-    if (ll > MAX_PF_DEPTH)
-        return ll-1;
+//    if (ll > MAX_PF_DEPTH)
+//        return ll-1;
 
-    int l2_read_queue_occ = get_l2_read_queue_occupancy(0);
-    if (l2_read_queue_occ > (1/2)*L2_READ_QUEUE_SIZE)
+	int remain_rq = L2_READ_QUEUE_SIZE - get_l2_read_queue_occupancy(0);
+
+    if (remain_rq < L2_MSHR_COUNT)
         return ll-1;
 
     // Confidence modulation
@@ -136,7 +141,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
     for(i=0; i<n_deltas; ++i)
     {   
         double Pd = confidence[i]*Pd_prev;
-
+        assert (Pd <= 1);
         if (ll > 1)
             Pd=Pd*alfa;
 
@@ -191,6 +196,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
             stats_filtered_pref+=1;
     }
 
+    
     /* SPP only generates a single lookahead signature, choosing the
      * candidate with the highest confidence
      */

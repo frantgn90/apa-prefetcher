@@ -12,32 +12,41 @@ void ghr_init()
     {
         GHR[i].valid=0;
     }
+
+    ghr_collisions=0;
+    ghr_predictions=0;
 }
 
 void ghr_update(ST_SIGNATURE signature, GHR_CONFIDENCE confidence,
         ST_LAST_OFFSET last_offset, PT_DELTA delta)
 {
-    assert (last_offset + delta >= (1<<BLOCK_OFFSET_BITS));
-
     int index=signature%N_GHR_ENTRIES;
+
+    if (GHR[index].valid)
+        ghr_collisions++;
 
     GHR[index].signature=signature;
     GHR[index].confidence=confidence;
     GHR[index].last_offset=last_offset;
     GHR[index].delta=delta;
+    GHR[index].valid=1;
 }
 
-BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE &signature)
+BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature)
 {
     int i;
     for (i=0; i<N_GHR_ENTRIES; ++i)
     {
-        ST_LAST_OFFSET_SIZE ghr_offset=GHR[i].last_offset\
-                                   +GHR[i].delta-(1<<BLOCK_OFFSET_BITS);
-        if (ghr_offset == offset)
+        if (GHR[i].valid)
         {
-            *signature = (GHR[i].signature<<(PT_DELTA_SIZE-1))^GHR[i].delta;
-            return TRUE;
+            ST_LAST_OFFSET ghr_offset=GHR[i].last_offset+GHR[i].delta-\
+                                      (1<<BLOCK_OFFSET_BITS);
+            if (ghr_offset == offset)
+            {
+                *signature = (GHR[i].signature<<(PT_DELTA_SIZE-1))^GHR[i].delta;
+                ghr_predictions++;
+                return TRUE;
+            }
         }
     }
     return FALSE;

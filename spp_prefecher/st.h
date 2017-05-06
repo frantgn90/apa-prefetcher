@@ -23,4 +23,4 @@ void st_init();
 BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_offset);
 void st_update(ST_TAG tag, ST_LAST_OFFSET offset);
 unsigned int st_used_entries();
-
+BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature);

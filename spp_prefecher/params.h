@@ -18,7 +18,7 @@ typedef unsigned int BOOL;
 typedef unsigned short ST_VALID;
 typedef unsigned short ST_TAG;
 typedef unsigned short ST_LAST_OFFSET;
-typedef unsigned int   ST_SIGNATURE;
+typedef unsigned short ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned short PT_CSIG;
@@ -46,7 +46,7 @@ typedef unsigned short GHR_VALID;
 #define ST_SIGNATURE_SIZE 12
 #define ST_LRU_SIZE 6
 
-#define PT_CSIG_SIZE 4
+#define PT_CSIG_SIZE 6
 #define PT_CDELTA_SIZE 4
 #define PT_DELTA_SIZE 7
 #define PT_VALID_SIZE 1
@@ -61,7 +61,7 @@ typedef unsigned short GHR_VALID;
 #define GHR_VALID_SIZE 1
 
 /* Structure sizes */
-#define N_ST_ENTRIES 512
+#define N_ST_ENTRIES 256
 #define N_PT_ENTRIES 512
 #define N_PT_DELTAS_PER_ENTRY 4
 #define N_PF_ENTRIES 1024
@@ -69,10 +69,8 @@ typedef unsigned short GHR_VALID;
 #define N_GHR_ENTRIES 8
 
 /* Threshold */
-#define Tp 0.6 // Confident threshold to prefetch
-#define Tf 0.85 // Confident threshold  to prefetch to L2 or LLC
-
-#define MAX_PF_DEPTH 4
+#define Tp 0.5 // Confident threshold to prefetch
+#define Tf 0.75 // Confident threshold  to prefetch to L2 or LLC
 
 /* stats */
 unsigned int stats_filtered_pref;

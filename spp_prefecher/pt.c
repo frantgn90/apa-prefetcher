@@ -13,6 +13,10 @@
 
 #include <pt.h>
 
+/* Not exposed functions */
+
+void pt_normalize_counters(pattern_table_entry_t *entry);
+
 void pt_init()
 {
     assert (PT_CSIG_SIZE <= sizeof(PT_CSIG)<<3);
@@ -55,7 +59,18 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
         }
         else if (entry->delta[j] == delta)
         {
+            PT_CDELTA prev_cdelta=entry->c_delta[j];
             entry->c_delta[j]=INCREMENT(entry->c_delta[j],PT_CDELTA_SIZE);
+
+            if (prev_cdelta > entry->c_delta[j]) // overflow!
+            {
+                entry->c_delta[j]=prev_cdelta;
+                pt_normalize_counters(entry);
+                prev_cdelta=entry->c_delta[j];
+                entry->c_delta[j]=INCREMENT(entry->c_delta[j],PT_CDELTA_SIZE);
+                assert (prev_cdelta+1 == entry->c_delta[j]);
+
+            }
             done=TRUE;
         }
         else if (entry->delta[j] < min_c_delta)
@@ -73,7 +88,13 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
         pt_collisions++;
     }
 
+    PT_CSIG prev_csig=entry->c_sig;
     entry->c_sig=INCREMENT(entry->c_sig, PT_CSIG_SIZE);
+
+    if (prev_csig > entry->c_sig) // overflow!
+    {
+        entry->c_sig=prev_csig;
+    }
 }
 
 int pt_get_deltas(ST_SIGNATURE signature, double c_threshold, PT_DELTA **delta, double **c)
@@ -91,6 +112,8 @@ int pt_get_deltas(ST_SIGNATURE signature, double c_threshold, PT_DELTA **delta, 
         if (entry->valid[i])
         {
             double confidence=entry->c_delta[i]/(double)entry->c_sig;
+
+            assert (confidence <= 1);
             if (confidence >= c_threshold)
             {
                 (*delta)[n_deltas]=entry->delta[i];
@@ -114,4 +137,26 @@ unsigned int pt_used_entries()
             result++;
     }
     return result;
+}
+
+void pt_normalize_counters(pattern_table_entry_t *entry)
+{
+    PT_CDELTA min_delta=((1<<PT_CDELTA_SIZE)-1);
+    int i;
+    for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
+    {
+        if (entry->valid[i] && entry->c_delta[i] < min_delta)
+            min_delta=entry->c_delta[i];
+    }
+
+    if (min_delta == 1)
+        min_delta=2;
+
+    for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
+    {
+        if (entry->valid[i])
+            if (entry->c_delta[i] > 1)
+                entry->c_delta[i]/=min_delta;
+    }
+    entry->c_sig/=min_delta;
 }
