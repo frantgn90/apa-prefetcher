@@ -38,8 +38,8 @@ void l2_prefetcher_initialize(int cpu_num)
 void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned long long int ip, int cache_hit)
 {
     pf_increment_useful(addr);
-    unsigned long long int page = (addr>>(PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS));
-    unsigned long long int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
+    int page = (addr>>(PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS));
+    int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
 
     ST_SIGNATURE signature;
     ST_LAST_OFFSET last_block;
@@ -50,7 +50,8 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
 
     if (exist)
     {
-        PT_DELTA new_delta=LRB_MASK(block-last_block, PT_DELTA_SIZE);
+        //PT_DELTA new_delta=LRB_MASK(block-last_block, PT_DELTA_SIZE);
+        PT_DELTA new_delta=block-last_block;
         // 2. Update pattern with last access
         pt_update(signature, new_delta);
         // 3. Update signature
@@ -75,7 +76,15 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
     {
         BOOL ghr_detect = ghr_get_signature(block, &signature);
         if (ghr_detect)
+        {
             st_set_signature(tag, signature, block);
+            
+            PT_DELTA *delta;
+            double *confidence;
+            unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
+            int lookahead_level=perform_prefetches(delta, confidence, 
+                n_deltas, 1, signature, addr, 1, block); 
+        }
         else
             st_update(tag, block);
     }
@@ -203,8 +212,9 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
     int res_ll=ll;
     if (highest_pd > 0)
     {
-        ST_SIGNATURE new_signature = (base_signature << (PT_DELTA_SIZE-1))\
-            ^ delta[highest_pd_i];
+        //ST_SIGNATURE new_signature = (base_signature << (PT_DELTA_SIZE-1))\
+        //    ^ delta[highest_pd_i];
+        ST_SIGNATURE new_signature = (base_signature, delta[highest_pd_i]);
         PT_DELTA *new_delta;
         double *new_confidence;
         unsigned int new_n_deltas = pt_get_deltas(new_signature, Tp, 

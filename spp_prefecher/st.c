@@ -77,13 +77,28 @@ void st_update(ST_TAG tag, ST_LAST_OFFSET offset)
     }
 
     PT_DELTA new_delta = offset - entry->last_offset;
-    new_delta = LRB_MASK(new_delta,PT_DELTA_SIZE);
-
-    ST_SIGNATURE new_signature = (entry->signature << (PT_DELTA_SIZE-1)) ^ new_delta;
+    ST_SIGNATURE new_signature = generate_signature(entry->signature, new_delta);
     entry->signature = LRB_MASK(new_signature, ST_SIGNATURE_SIZE);
     entry->last_offset = LRB_MASK(offset, ST_LAST_OFFSET_SIZE);
 
     update_lru_by_touch(entry);
+}
+
+ST_SIGNATURE generate_signature(ST_SIGNATURE signature, PT_DELTA delta)
+{
+    signature = signature << ST_SIGNATURE_SHIFT;
+
+    // Signature LOW-PART
+    ST_SIGNATURE lp_signature = signature ^ delta;
+    lp_signature = LRB_MASK(lp_signature, PT_DELTA_SIZE);
+
+    // Aignature HIGH-PART
+    ST_SIGNATURE mask = ((1<<ST_SIGNATURE_SIZE)-1)&((1<<PT_DELTA_SIZE)-1)<<PT_DELTA_SIZE;
+    signature = signature & mask;
+
+    // Result
+    return signature | lp_signature;
+
 }
 
 unsigned int st_used_entries()

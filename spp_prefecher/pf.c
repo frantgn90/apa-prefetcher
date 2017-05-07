@@ -23,6 +23,7 @@ void pf_init()
     pf_collisions=0;
     c_total=0;
     c_useful=0;
+    alfa=0.5;
 }
 
 void pf_remove_entry(unsigned long long pf_addr)
@@ -110,11 +111,12 @@ void pf_increment_useful(unsigned long long pf_addr)
 double pf_get_alfa()
 {
     if (c_total == 0)
-        return 1;
+        return 0.5;
 
     double alfa=c_useful/(double)c_total;
-    if (alfa > 1) /* because overflow */
-        alfa=1;
+
+    if (alfa >= 1) /* because overflow */
+        alfa=0.5;
 
     return alfa;
 

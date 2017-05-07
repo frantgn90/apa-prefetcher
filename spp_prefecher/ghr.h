@@ -1,5 +1,9 @@
+#ifndef _GHR_H
+#define _GHR_H
+
 #include <stdio.h>
 #include <params.h>
+#include <st.h>
 
 struct ghr_table_entry
 {
@@ -25,3 +29,5 @@ void ghr_init();
 void ghr_update(ST_SIGNATURE signature, GHR_CONFIDENCE confidence, ST_LAST_OFFSET last_offset, PT_DELTA delta);
 BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature);
 int ghr_used_entries();
+
+#endif

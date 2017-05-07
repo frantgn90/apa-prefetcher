@@ -52,7 +52,8 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
     {
         if (!entry->valid[j])
         {
-            entry->delta[j]=LRB_MASK(delta,PT_DELTA_SIZE);
+            //entry->delta[j]=LRB_MASK(delta,PT_DELTA_SIZE);
+            entry->delta[j]=delta;
             entry->c_delta[j]=1;
             entry->valid[j]=1;
             done=TRUE;
@@ -73,9 +74,9 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
             }
             done=TRUE;
         }
-        else if (entry->delta[j] < min_c_delta)
+        else if (entry->c_delta[j] < min_c_delta)
         {
-            min_c_delta=entry->delta[j];
+            min_c_delta=entry->c_delta[j];
             min_c_delta_index=j;
         }
     }
@@ -83,7 +84,8 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
     if (!done) // Replace delta with less confident
     {
         entry->c_sig-=entry->c_delta[min_c_delta_index];
-        entry->delta[min_c_delta_index]=LRB_MASK(delta,PT_DELTA_SIZE);
+        //entry->delta[min_c_delta_index]=LRB_MASK(delta,PT_DELTA_SIZE);
+        entry->delta[min_c_delta_index]=delta;
         entry->c_delta[min_c_delta_index]=1;
         pt_collisions++;
     }

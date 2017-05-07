@@ -7,6 +7,7 @@
 /* Utilities */
 #define INCREMENT(var, size) ((var+1) & ((1<<size)-1))
 #define LRB_MASK(var, size) (var & ((1<<size)-1))
+#define SLRB_MASK(var, s1, s2) ((((1<<(s2-s1))-1)*(var&(1<<(s1-1))))<<s1|LRB_MASK(var,s1))
 #define ADDR_TO_PAGE(addr) (addr>>PAGE_BLOCK_OFFSETS)
 
 #define TRUE  1
@@ -18,13 +19,14 @@ typedef unsigned int BOOL;
 typedef unsigned short ST_VALID;
 typedef unsigned short ST_TAG;
 typedef unsigned short ST_LAST_OFFSET;
-typedef unsigned short ST_SIGNATURE;
+typedef unsigned int   ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned short PT_CSIG;
-typedef          short PT_CDELTA;
-typedef unsigned short PT_DELTA;
+typedef unsigned short PT_CDELTA;
+typedef          int   PT_DELTA;
 typedef unsigned short PT_VALID;
+typedef unsigned short PT_LRU;
 
 typedef unsigned short PF_VALID;
 typedef unsigned short PF_TAG;
@@ -44,9 +46,10 @@ typedef unsigned short GHR_VALID;
 #define ST_TAG_SIZE   16
 #define ST_LAST_OFFSET_SIZE 6
 #define ST_SIGNATURE_SIZE 12
-#define ST_LRU_SIZE 6
+#define ST_LRU_SIZE 8
+#define ST_SIGNATURE_SHIFT 3
 
-#define PT_CSIG_SIZE 6
+#define PT_CSIG_SIZE 12
 #define PT_CDELTA_SIZE 4
 #define PT_DELTA_SIZE 7
 #define PT_VALID_SIZE 1
@@ -54,8 +57,8 @@ typedef unsigned short GHR_VALID;
 #define PF_VALID_SIZE 1
 #define PF_TAG_SIZE 6
 #define PF_USEFUL_SIZE 1
-#define PF_AC_CTOTAL_SIZE 10
-#define PF_AC_CUSEFUL_SIZE 10
+#define PF_AC_CTOTAL_SIZE 12
+#define PF_AC_CUSEFUL_SIZE 12
 
 #define GHR_CONFIDENCE_SIZE 8
 #define GHR_VALID_SIZE 1

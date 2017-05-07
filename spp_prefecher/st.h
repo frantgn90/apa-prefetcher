@@ -1,3 +1,6 @@
+#ifndef _ST_H
+#define _ST_H
+
 #include <stdio.h>
 #include <params.h>
 
@@ -24,3 +27,6 @@ BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_
 void st_update(ST_TAG tag, ST_LAST_OFFSET offset);
 unsigned int st_used_entries();
 BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature);
+ST_SIGNATURE generate_signature(ST_SIGNATURE signature, PT_DELTA delta);
+
+#endif

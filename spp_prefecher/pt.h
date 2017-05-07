@@ -1,3 +1,6 @@
+#ifndef _PT_H
+#define _PT_H
+
 #include <stdio.h>
 #include <params.h>
 
@@ -22,5 +25,4 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta);
 int pt_get_deltas(ST_SIGNATURE signature, double c_threshold, PT_DELTA **delta, double **c);
 unsigned int pt_used_entries();
 
-
-
+#endif
