@@ -27,7 +27,7 @@ unsigned int ghr_predictions;
 
 void ghr_init();
 void ghr_update(ST_SIGNATURE signature, GHR_CONFIDENCE confidence, ST_LAST_OFFSET last_offset, PT_DELTA delta);
-BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature);
+BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature, GHR_CONFIDENCE *c);
 int ghr_used_entries();
 
 #endif

@@ -32,7 +32,7 @@ void ghr_update(ST_SIGNATURE signature, GHR_CONFIDENCE confidence,
     GHR[index].valid=1;
 }
 
-BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature)
+BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature, GHR_CONFIDENCE *c)
 {
     int i;
     for (i=0; i<N_GHR_ENTRIES; ++i)
@@ -43,6 +43,7 @@ BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature)
             if (ghr_offset == offset)
             {
                 *signature = generate_signature(GHR[i].signature, GHR[i].delta);
+                *c = GHR[i].confidence;
                 ghr_predictions++;
                 return TRUE;
             }

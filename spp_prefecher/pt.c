@@ -83,7 +83,7 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
 
     if (!done) // Replace delta with less confident
     {
-        entry->c_sig-=entry->c_delta[min_c_delta_index];
+        //entry->c_sig-=entry->c_delta[min_c_delta_index];
         //entry->delta[min_c_delta_index]=LRB_MASK(delta,PT_DELTA_SIZE);
         entry->delta[min_c_delta_index]=delta;
         entry->c_delta[min_c_delta_index]=1;
@@ -143,22 +143,22 @@ unsigned int pt_used_entries()
 
 void pt_normalize_counters(pattern_table_entry_t *entry)
 {
-    PT_CDELTA min_delta=((1<<PT_CDELTA_SIZE)-1);
+    PT_CDELTA min_cdelta=((1<<PT_CDELTA_SIZE)-1);
     int i;
     for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
     {
-        if (entry->valid[i] && entry->c_delta[i] < min_delta)
-            min_delta=entry->c_delta[i];
+        if (entry->valid[i] && entry->c_delta[i] < min_cdelta)
+            min_cdelta=entry->c_delta[i];
     }
 
-    if (min_delta == 1)
-        min_delta=2;
+    if (min_cdelta == 1)
+        min_cdelta=2;
 
     for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
     {
         if (entry->valid[i])
             if (entry->c_delta[i] > 1)
-                entry->c_delta[i]/=min_delta;
+                entry->c_delta[i]/=min_cdelta;
     }
-    entry->c_sig/=min_delta;
+    entry->c_sig/=min_cdelta;
 }

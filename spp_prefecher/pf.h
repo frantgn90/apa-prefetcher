@@ -12,9 +12,12 @@
 
 struct prefetch_filter_entry
 {
-    PF_VALID valid;
-    PF_TAG tag;
-    PF_USEFUL useful;
+    PF_TAG tag[N_PF_WAYS];
+    PF_USEFUL useful[N_PF_WAYS];
+    PF_VALID valid[N_PF_WAYS];
+    PF_LRU lru[N_PF_WAYS];
+    //PF_TAG tag;
+    //PF_USEFUL useful;
 };
 typedef struct prefetch_filter_entry prefetch_filter_entry_t;
 
