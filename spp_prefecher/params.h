@@ -19,12 +19,12 @@ typedef unsigned int BOOL;
 typedef unsigned short ST_VALID;
 typedef unsigned short ST_TAG;
 typedef unsigned short ST_LAST_OFFSET;
-typedef unsigned int   ST_SIGNATURE;
+typedef unsigned short ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned short PT_CSIG;
 typedef unsigned short PT_CDELTA;
-typedef          int   PT_DELTA;
+typedef          short   PT_DELTA;
 typedef unsigned short PT_VALID;
 typedef unsigned short PT_LRU;
 
@@ -73,7 +73,7 @@ typedef unsigned short GHR_VALID;
 
 /* Threshold */
 #define Tp 0.5 // Confident threshold to prefetch
-#define Tf 0.75 // Confident threshold  to prefetch to L2 or LLC
+#define Tf 0.60 // Confident threshold  to prefetch to L2 or LLC
 
 /* stats */
 unsigned int stats_filtered_pref;

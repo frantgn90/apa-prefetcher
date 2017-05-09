@@ -39,11 +39,9 @@ BOOL ghr_get_signature(ST_LAST_OFFSET offset, ST_SIGNATURE *signature)
     {
         if (GHR[i].valid)
         {
-            ST_LAST_OFFSET ghr_offset=GHR[i].last_offset+GHR[i].delta-\
-                                      (1<<BLOCK_OFFSET_BITS);
+            ST_LAST_OFFSET ghr_offset=GHR[i].last_offset+GHR[i].delta-(1<<BLOCK_OFFSET_BITS);
             if (ghr_offset == offset)
             {
-                //*signature = (GHR[i].signature<<(PT_DELTA_SIZE-1))^GHR[i].delta;
                 *signature = generate_signature(GHR[i].signature, GHR[i].delta);
                 ghr_predictions++;
                 return TRUE;

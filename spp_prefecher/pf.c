@@ -67,18 +67,6 @@ void pf_insert_entry(unsigned long long pf_addr)
     entry->useful=0;
 }
 
-void pf_set_useful(unsigned long long pf_addr)
-{
-    unsigned int index = ADDR_TO_INDEX(pf_addr);
-    PF_TAG tag = ADDR_TO_TAG(pf_addr);
-
-    prefetch_filter_entry_t *entry=&PF[index%N_PF_ENTRIES];
-    if (entry->tag==tag)
-    {
-        entry->useful=1;
-    }
-}
-
 void pf_increment_total()
 {
     PF_AC_CTOTAL prev_total = c_total;
@@ -111,7 +99,7 @@ void pf_increment_useful(unsigned long long pf_addr)
 double pf_get_alfa()
 {
     if (c_total == 0)
-        return 0.5;
+        return 0.0;
 
     double alfa=c_useful/(double)c_total;
 

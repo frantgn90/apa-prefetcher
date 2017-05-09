@@ -38,8 +38,8 @@ void l2_prefetcher_initialize(int cpu_num)
 void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned long long int ip, int cache_hit)
 {
     pf_increment_useful(addr);
-    int page = (addr>>(PAGE_OFFSET_BITS+BLOCK_OFFSET_BITS));
-    int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
+    unsigned int page = (addr>>(PAGE_BLOCK_OFFSETS));
+    unsigned int block = LRB_MASK(addr>>(BLOCK_OFFSET_BITS), PAGE_OFFSET_BITS);
 
     ST_SIGNATURE signature;
     ST_LAST_OFFSET last_block;
@@ -97,13 +97,12 @@ void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, i
 
 void l2_prefetcher_heartbeat_stats(int cpu_num)
 {
-  printf("Prefetcher heartbeat stats\n");
-  printf("c_useful=%d c_total=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
-  printf("filtered prefc=%u\n", stats_filtered_pref);
-  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
-  printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
-  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
-          ghr_collisions, ghr_predictions);
+    printf("c_useful=%d c_total=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
+//  printf("filtered prefc=%u\n", stats_filtered_pref);
+//  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
+//  printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
+//  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
+//          ghr_collisions, ghr_predictions);
 }
 
 void l2_prefetcher_warmup_stats(int cpu_num)
@@ -131,9 +130,6 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
      * queue entry becomes less than the number of L1 MSHR
      */
 
-//    if (ll > MAX_PF_DEPTH)
-//        return ll-1;
-
 	int remain_rq = L2_READ_QUEUE_SIZE - get_l2_read_queue_occupancy(0);
 
     if (remain_rq < L2_MSHR_COUNT)
@@ -142,19 +138,19 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
     // Confidence modulation
     double alfa = pf_get_alfa();
 
-    int i;
     double highest_pd = 0;
-    int highest_pd_i;
+    int i, highest_pd_i;
     unsigned long long int highest_pd_addr;
 
     for(i=0; i<n_deltas; ++i)
     {   
         double Pd = confidence[i]*Pd_prev;
         assert (Pd <= 1);
-        if (ll > 1)
+
+        if (ll > 1) /* Is lookahead */
             Pd=Pd*alfa;
 
-        if (Pd < Tp)
+        if (Pd < Tp) /* Threshold filter */
             continue;
         
         int fill_level;
@@ -164,6 +160,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
             fill_level=FILL_LLC;
 
         // Prefetching
+		//unsigned long long int pf_addr = ((addr >> 6) + delta[i]) << 6;
         unsigned long long int pf_addr = addr+(delta[i]<<BLOCK_OFFSET_BITS);
         BOOL same_page = (ADDR_TO_PAGE(addr) == ADDR_TO_PAGE(pf_addr));
 
@@ -182,7 +179,6 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         if (!pf_exist_entry(pf_addr) && same_page)
         {
             int res=l2_prefetch_line(0, addr, pf_addr, fill_level);
-    
             pf_insert_entry(pf_addr);
             pf_increment_total();
 

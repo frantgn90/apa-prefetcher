@@ -8,7 +8,7 @@
     (LRB_MASK(pf_addr>>(PAGE_BLOCK_OFFSETS), N_PF_ADDR_BITS))
 
 #define ADDR_TO_TAG(pf_addr)\
-    (LRB_MASK(pf_addr>>(PAGE_BLOCK_OFFSETS+N_PF_ADDR_BITS), PF_TAG_SIZE))
+    (LRB_MASK(pf_addr>>(BLOCK_OFFSET_BITS), PF_TAG_SIZE))
 
 struct prefetch_filter_entry
 {
