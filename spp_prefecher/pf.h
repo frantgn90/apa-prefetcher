@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <params.h>
 
-#define ADDR_TO_INDEX(pf_addr)\
+#define PF_ADDR_TO_INDEX(pf_addr)\
     (LRB_MASK(pf_addr>>(PAGE_BLOCK_OFFSETS), N_PF_ADDR_BITS))
 
-#define ADDR_TO_TAG(pf_addr)\
+#define PF_ADDR_TO_TAG(pf_addr)\
     (LRB_MASK(pf_addr>>(BLOCK_OFFSET_BITS), PF_TAG_SIZE))
 
 struct prefetch_filter_entry

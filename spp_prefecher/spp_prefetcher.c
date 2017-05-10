@@ -28,6 +28,8 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
 void l2_prefetcher_initialize(int cpu_num)
 {
     stats_filtered_pref=0;
+    total_lookahead_depth=0;
+    n_lookahead_depth=0;
 
     st_init();
     pt_init();
@@ -70,6 +72,8 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         // 6. Perform prefetch. There is no Pd_prev, so is 1
         int lookahead_level=perform_prefetches(delta, confidence, 
                 n_deltas, 1, signature, addr, 1, addr); 
+        total_lookahead_depth+=lookahead_level;
+        n_lookahead_depth+=1;
 
         free(delta);
         free(confidence);
@@ -87,6 +91,9 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
             unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
             int lookahead_level=perform_prefetches(delta, confidence, 
                 n_deltas, c, signature, addr, 1, block); 
+            total_lookahead_depth+=lookahead_level;
+            n_lookahead_depth+=1;
+
         }
         else
             st_update(tag, block);
@@ -95,19 +102,18 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
 
 void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, int prefetch, unsigned long long int evicted_addr)
 {
-    if (evicted_addr && prefetch)
+    if (evicted_addr != 0 && prefetch)
         pf_remove_entry(evicted_addr);
     
     if (!pf_exist_entry(addr))
-    {
-        pf_insert_entry(addr);
-    }
+      pf_insert_entry(addr);
 }
 
 void l2_prefetcher_heartbeat_stats(int cpu_num)
 {
-    printf("c_useful=%d c_total=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
-    printf("PF stats: filtered=%u repl=%u\n", stats_filtered_pref, pf_collisions);
+    printf("* Lookahead avg. depth: %u\n", (total_lookahead_depth/n_lookahead_depth));
+    printf("* Lookahed throttle: Cu=%d Ct=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
+    printf("* PF stats: filtered=%u repl=%u\n", stats_filtered_pref, pf_collisions);
 //  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
 //  printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
 //  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
