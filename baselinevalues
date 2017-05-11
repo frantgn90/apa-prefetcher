@@ -1,21 +1,21 @@
-SPP Baseline values
+SPP Baseline and new_spp values
 
-gcc = 0.31552
-
-
-gemsFDTD = 3.449461
+gcc = 0.31552 ; 0.329098
 
 
-lbm = 1.994193
+gemsFDTD = 3.449461 ; 3.450970
 
-libquantum = 3.280295
 
-mcf = 0.370686
+lbm = 1.994193 ; 2.023791
 
-milc = 1.296861
+libquantum = 3.280295 ; 3.297112
 
-omnetpp = 1.967538
+mcf = 0.370686 ; 0.357095
 
-leslie3d =  1.664176
+milc = 1.296861 ; 1.202067
+
+omnetpp = 1.967538 ; 1.942997
+
+leslie3d =  1.664176 ; 1.582264
 
 
