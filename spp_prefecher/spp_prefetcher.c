@@ -70,10 +70,13 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
 
         // 6. Perform prefetch. There is no Pd_prev, so is 1
-        int lookahead_level=perform_prefetches(delta, confidence, 
-                n_deltas, 1, signature, addr, 1, addr); 
-        total_lookahead_depth+=lookahead_level;
-        n_lookahead_depth+=1;
+        if (n_deltas > 0)
+        {
+            int lookahead_level=perform_prefetches(delta, confidence, 
+                    n_deltas, 1, signature, addr, 1, addr); 
+            total_lookahead_depth+=lookahead_level;
+            n_lookahead_depth+=1;
+        }
 
         free(delta);
         free(confidence);
@@ -89,10 +92,13 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
             PT_DELTA *delta;
             double *confidence;
             unsigned int n_deltas = pt_get_deltas(signature, Tp, &delta, &confidence);
-            int lookahead_level=perform_prefetches(delta, confidence, 
-                n_deltas, c, signature, addr, 1, block); 
-            total_lookahead_depth+=lookahead_level;
-            n_lookahead_depth+=1;
+            if (n_deltas > 0)
+            {
+                int lookahead_level=perform_prefetches(delta, confidence, 
+                    n_deltas, c, signature, addr, 1, block); 
+                total_lookahead_depth+=lookahead_level;
+                n_lookahead_depth+=1;
+            }
 
         }
         else
@@ -115,7 +121,7 @@ void l2_prefetcher_heartbeat_stats(int cpu_num)
     printf("* Lookahed throttle: Cu=%d Ct=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
     printf("* PF stats: filtered=%u repl=%u\n", stats_filtered_pref, pf_collisions);
 //  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
-//  printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
+    printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
 //  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
 //          ghr_collisions, ghr_predictions);
 }
@@ -137,8 +143,8 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         unsigned long long int addr, int ll, unsigned long long int base_addr)
 {
 
-    if (n_deltas == 0)
-        return ll-1;
+    int res_ll=ll;
+    assert (n_deltas > 0);
 
     /* In addition to throttling when Pd falls below the Tp, SPP also stops
      * prefetching if there are not enough L2 read queue resources.
@@ -223,14 +229,15 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
             ghr_update(base_signature, Pd, last_offset, delta[i]);
         }
         else if (pf_exist_entry(pf_addr))
+        {
             stats_filtered_pref+=1;
+        }
     }
 
     
     /* SPP only generates a single lookahead signature, choosing the
      * candidate with the highest confidence
      */
-    int res_ll=ll;
     if (highest_pd > 0)
     {
         //ST_SIGNATURE new_signature = (base_signature << (PT_DELTA_SIZE-1))\
@@ -241,8 +248,14 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         unsigned int new_n_deltas = pt_get_deltas(new_signature, Tp, 
                 &new_delta, &new_confidence);
 
-        res_ll=perform_prefetches(new_delta, new_confidence, new_n_deltas, 
+        if (new_n_deltas > 0)
+        {
+            res_ll=perform_prefetches(new_delta, new_confidence, new_n_deltas, 
                 highest_pd, new_signature, highest_pd_addr, ll+1, base_addr);
+        }
+
+        free (new_delta);
+        free (new_confidence);
     }
     return res_ll;
 }

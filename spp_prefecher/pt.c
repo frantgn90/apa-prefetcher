@@ -46,19 +46,12 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
     BOOL done=FALSE;
     PT_DELTA min_c_delta=(1<<PT_DELTA_SIZE)-1;
     unsigned int min_c_delta_index;
+    int invalid_entry_i=-1;
 
     int j;
     for (j=0; j<N_PT_DELTAS_PER_ENTRY && !done; ++j)
     {
-        if (!entry->valid[j])
-        {
-            //entry->delta[j]=LRB_MASK(delta,PT_DELTA_SIZE);
-            entry->delta[j]=delta;
-            entry->c_delta[j]=1;
-            entry->valid[j]=1;
-            done=TRUE;
-        }
-        else if (entry->delta[j] == delta)
+        if (entry->delta[j] == delta && entry->valid[j]) 
         {
             PT_CDELTA prev_cdelta=entry->c_delta[j];
             entry->c_delta[j]=INCREMENT(entry->c_delta[j],PT_CDELTA_SIZE);
@@ -74,11 +67,22 @@ void pt_update(ST_SIGNATURE signature, PT_DELTA delta)
             }
             done=TRUE;
         }
-        else if (entry->c_delta[j] < min_c_delta)
+        else if (entry->c_delta[j] < min_c_delta && entry->valid[j])
         {
             min_c_delta=entry->c_delta[j];
             min_c_delta_index=j;
         }
+        else if (!entry->valid[j])
+            invalid_entry_i=j;
+    }
+
+    if (!done && invalid_entry_i!=-1) // Put it on free entry
+    {
+        //entry->delta[j]=LRB_MASK(delta,PT_DELTA_SIZE);
+        entry->delta[invalid_entry_i]=delta;
+        entry->c_delta[invalid_entry_i]=1;
+        entry->valid[invalid_entry_i]=1;
+        done=TRUE;
     }
 
     if (!done) // Replace delta with less confident
@@ -109,11 +113,16 @@ int pt_get_deltas(ST_SIGNATURE signature, double c_threshold, PT_DELTA **delta, 
     int n_deltas=0;
 
     int i;
+    unsigned int total_cdelta=0;
+    for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
+        total_cdelta+=entry->c_delta[i];
+
     for (i=0; i<N_PT_DELTAS_PER_ENTRY; ++i)
     {
         if (entry->valid[i])
         {
-            double confidence=entry->c_delta[i]/(double)entry->c_sig;
+            //double confidence=entry->c_delta[i]/(double)entry->c_sig;
+            double confidence=entry->c_delta[i]/(double)total_cdelta;
 
             assert (confidence <= 1);
             if (confidence >= c_threshold)
@@ -135,8 +144,12 @@ unsigned int pt_used_entries()
     int i;
     for (i=0; i<N_PT_ENTRIES; ++i)
     {
-        if (PT[i].c_sig > 0)
-            result++;
+        int j;
+        for (j=0; j<N_PT_DELTAS_PER_ENTRY; ++j)
+        {
+            if (PT[i].valid[j])
+                result++;
+        }
     }
     return result;
 }

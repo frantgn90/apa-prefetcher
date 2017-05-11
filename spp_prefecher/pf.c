@@ -107,16 +107,16 @@ void pf_increment_useful(unsigned long long pf_addr)
     if (exists && !set->useful[way])
     {
         set->useful[way]=1;
+        c_useful=INCREMENT(c_useful, PF_AC_CUSEFUL_SIZE);
     }
-    else if(!exists)
+    /*else if(!exists)
     {
         pf_insert_entry(pf_addr);
         exists=pf_get_entry(pf_addr, &set, &way);
         assert(exists);
 
         set->useful[way]=1;
-    }
-    c_useful=INCREMENT(c_useful, PF_AC_CUSEFUL_SIZE);
+    }*/
 }
 
 double pf_get_alfa()

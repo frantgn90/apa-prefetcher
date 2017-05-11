@@ -51,16 +51,16 @@ typedef unsigned short GHR_VALID;
 #define ST_LRU_SIZE 8
 #define ST_SIGNATURE_SHIFT 3
 
-#define PT_CSIG_SIZE 4
-#define PT_CDELTA_SIZE 4
+#define PT_CSIG_SIZE 12
+#define PT_CDELTA_SIZE 12
 #define PT_DELTA_SIZE 7
 #define PT_VALID_SIZE 1
 
 #define PF_VALID_SIZE 1
 #define PF_TAG_SIZE 6
 #define PF_USEFUL_SIZE 1
-#define PF_AC_CTOTAL_SIZE 30
-#define PF_AC_CUSEFUL_SIZE 30
+#define PF_AC_CTOTAL_SIZE 12
+#define PF_AC_CUSEFUL_SIZE 12
 #define PF_LRU_SIZE 2 // because 4 ways
 
 #define GHR_CONFIDENCE_SIZE 8
@@ -70,13 +70,13 @@ typedef unsigned short GHR_VALID;
 #define N_ST_ENTRIES 256
 #define N_PT_ENTRIES 1024
 #define N_PT_DELTAS_PER_ENTRY 4
-#define N_PF_ENTRIES 1024
-#define N_PF_WAYS 8
-#define N_PF_ADDR_BITS 10// need 10 for 1024, pf is direct mapped
-#define N_GHR_ENTRIES 8
+#define N_PF_ENTRIES 256
+#define N_PF_WAYS 16
+#define N_PF_ADDR_BITS 8// need 10 for 1024, pf is direct mapped
+#define N_GHR_ENTRIES 16
 
 /* Threshold */
-#define Tp 0.35 // Confident threshold to prefetch
+#define Tp 0.25 // Confident threshold to prefetch
 #define Tf 0.75 // Confident threshold  to prefetch to L2 or LLC
 
 /* stats */
