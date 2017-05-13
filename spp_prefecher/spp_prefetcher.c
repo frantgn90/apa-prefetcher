@@ -74,8 +74,11 @@ void l2_prefetcher_operate(int cpu_num, unsigned long long int addr, unsigned lo
         {
             int lookahead_level=perform_prefetches(delta, confidence, 
                     n_deltas, 1, signature, addr, 1, addr); 
-            total_lookahead_depth+=lookahead_level;
-            n_lookahead_depth+=1;
+            if (lookahead_level>0)
+            {
+                total_lookahead_depth+=lookahead_level;
+                n_lookahead_depth+=1;
+            }
         }
 
         free(delta);
@@ -117,11 +120,17 @@ void l2_cache_fill(int cpu_num, unsigned long long int addr, int set, int way, i
 
 void l2_prefetcher_heartbeat_stats(int cpu_num)
 {
-    printf("* Lookahead avg. depth: %u\n", (total_lookahead_depth/n_lookahead_depth));
+
+    double avg_deph=0;
+    if (n_lookahead_depth > 0)
+    {
+        avg_deph=(total_lookahead_depth/(double)n_lookahead_depth);
+    }
+    printf("* Lookahead avg. depth (%u/%u): %f\n", total_lookahead_depth, n_lookahead_depth, avg_deph);
     printf("* Lookahed throttle: Cu=%d Ct=%d alfa = %f\n", c_useful, c_total, pf_get_alfa());
     printf("* PF stats: filtered=%u repl=%u\n", stats_filtered_pref, pf_collisions);
 //  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
-    printf("PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
+    printf("* PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
 //  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
 //          ghr_collisions, ghr_predictions);
 }
@@ -181,7 +190,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         else
             fill_level=FILL_LLC;
 
-        // Prefetching
+        // Prefetching address
 		unsigned long long int pf_addr = ((addr >> 6) + delta[i]) << 6;
         //unsigned long long int pf_addr = addr+(delta[i]<<BLOCK_OFFSET_BITS);
         BOOL same_page = (ADDR_TO_PAGE(base_addr) == ADDR_TO_PAGE(pf_addr));
@@ -201,15 +210,10 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
         if (!pf_exist_entry(pf_addr) && same_page)
         {
 
-            //if (ADDR_TO_BLOCK(addr) == ADDR_TO_BLOCK(pf_addr))
-            //    continue;
-
             int res=l2_prefetch_line(0, base_addr, pf_addr, fill_level);
 
             if (res != 1)
-            {
                 printf("****** WTF ******\n");
-            }
             else
             {
                 pf_insert_entry(pf_addr);
@@ -217,7 +221,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
             }
 
         }
-        else if (!same_page /*&& ll == 1*/) /* Not lookahead */
+        else if (!same_page /*&& ll == 0*/) /* Not lookahead */
         {
             /* 
              * When there is a pretech request that goes beyond the current
@@ -240,9 +244,8 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
      */
     if (highest_pd > 0)
     {
-        //ST_SIGNATURE new_signature = (base_signature << (PT_DELTA_SIZE-1))\
-        //    ^ delta[highest_pd_i];
-        ST_SIGNATURE new_signature = (base_signature, delta[highest_pd_i]);
+        ST_SIGNATURE new_signature = generate_signature(base_signature, 
+                delta[highest_pd_i]);
         PT_DELTA *new_delta;
         double *new_confidence;
         unsigned int new_n_deltas = pt_get_deltas(new_signature, Tp, 

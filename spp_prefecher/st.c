@@ -97,7 +97,7 @@ ST_SIGNATURE generate_signature(ST_SIGNATURE signature, PT_DELTA delta)
     signature = signature & mask;
 
     // Result
-    return signature | lp_signature;
+    return (signature | lp_signature);
 
 }
 
@@ -119,6 +119,7 @@ unsigned int st_used_entries()
 BOOL st_get_entry(ST_TAG tag, signature_table_entry_t **entry)
 {
     int i;
+    *entry=NULL;
     for (i=0; i<N_ST_ENTRIES; ++i)
     {
         if (ST[i].valid && ST[i].tag == tag)

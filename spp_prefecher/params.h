@@ -70,9 +70,9 @@ typedef unsigned short GHR_VALID;
 #define N_ST_ENTRIES 256
 #define N_PT_ENTRIES 1024
 #define N_PT_DELTAS_PER_ENTRY 4
-#define N_PF_ENTRIES 256
+#define N_PF_ENTRIES 1024
 #define N_PF_WAYS 16
-#define N_PF_ADDR_BITS 8// need 10 for 1024, pf is direct mapped
+#define N_PF_ADDR_BITS 10// need 10 for 1024, pf is direct mapped
 #define N_GHR_ENTRIES 16
 
 /* Threshold */
