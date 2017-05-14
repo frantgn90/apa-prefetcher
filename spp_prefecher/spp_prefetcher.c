@@ -131,8 +131,8 @@ void l2_prefetcher_heartbeat_stats(int cpu_num)
     printf("* PF stats: filtered=%u repl=%u\n", stats_filtered_pref, pf_collisions);
 //  printf("ST stats: used=%u repl=%u\n", st_used_entries(), st_collisions);
     printf("* PT stats: used=%u repl=%u\n", pt_used_entries(), pt_collisions);
-//  printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
-//          ghr_collisions, ghr_predictions);
+    printf("GHR stats; used=%u repl=%u pred=%u\n", ghr_used_entries(), 
+          ghr_collisions, ghr_predictions);
 }
 
 void l2_prefetcher_warmup_stats(int cpu_num)
@@ -163,7 +163,7 @@ int perform_prefetches(PT_DELTA *delta, double *confidence,
 
 	int remain_rq = L2_READ_QUEUE_SIZE-get_l2_read_queue_occupancy(0);
 
-    if (remain_rq < L2_MSHR_COUNT)
+    if (remain_rq < 8)
         return ll-1;
 
     // Confidence modulation

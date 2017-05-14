@@ -24,7 +24,7 @@ typedef unsigned int   ST_SIGNATURE;
 typedef unsigned short ST_LRU;
 
 typedef unsigned int   PT_CSIG;
-typedef unsigned short PT_CDELTA;
+typedef unsigned int   PT_CDELTA;
 typedef          short PT_DELTA;
 typedef unsigned short PT_VALID;
 typedef unsigned short PT_LRU;
@@ -59,9 +59,9 @@ typedef unsigned short GHR_VALID;
 #define PF_VALID_SIZE 1
 #define PF_TAG_SIZE 6
 #define PF_USEFUL_SIZE 1
-#define PF_AC_CTOTAL_SIZE 12
-#define PF_AC_CUSEFUL_SIZE 12
-#define PF_LRU_SIZE 2 // because 4 ways
+#define PF_AC_CTOTAL_SIZE 30
+#define PF_AC_CUSEFUL_SIZE 30
+#define PF_LRU_SIZE 4 
 
 #define GHR_CONFIDENCE_SIZE 8
 #define GHR_VALID_SIZE 1
@@ -69,15 +69,15 @@ typedef unsigned short GHR_VALID;
 /* Structure sizes */
 #define N_ST_ENTRIES 256
 #define N_PT_ENTRIES 1024
-#define N_PT_DELTAS_PER_ENTRY 4
-#define N_PF_ENTRIES 1024
+#define N_PT_DELTAS_PER_ENTRY 8
+#define N_PF_ENTRIES 512
 #define N_PF_WAYS 16
 #define N_PF_ADDR_BITS 10// need 10 for 1024, pf is direct mapped
 #define N_GHR_ENTRIES 16
 
 /* Threshold */
 #define Tp 0.25 // Confident threshold to prefetch
-#define Tf 0.75 // Confident threshold  to prefetch to L2 or LLC
+#define Tf 0.9 // Confident threshold  to prefetch to L2 or LLC
 
 /* stats */
 unsigned int stats_filtered_pref;

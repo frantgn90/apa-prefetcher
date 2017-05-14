@@ -122,7 +122,7 @@ void pf_increment_useful(unsigned long long pf_addr)
 double pf_get_alfa()
 {
     if (c_total == 0)
-        return 1;
+        return 0.9;
 
     double alfa=c_useful/(double)c_total;
 

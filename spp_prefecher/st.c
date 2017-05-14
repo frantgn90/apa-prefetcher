@@ -43,6 +43,9 @@ BOOL st_get_signature(ST_TAG tag, ST_SIGNATURE *signature, ST_LAST_OFFSET *last_
 
     if (exists)
     {
+        if (entry->signature == 0) // There is not history yet
+            return FALSE;
+
         *signature = entry->signature;
         *last_offset = entry->last_offset;
         update_lru_by_touch(entry);
@@ -74,13 +77,15 @@ void st_update(ST_TAG tag, ST_LAST_OFFSET offset)
     if (!exists)
     {
         entry = st_allocate_entry(tag);
+        entry->signature = 0;
     }
-
-    PT_DELTA new_delta = offset - entry->last_offset;
-    ST_SIGNATURE new_signature = generate_signature(entry->signature, new_delta);
-    entry->signature = LRB_MASK(new_signature, ST_SIGNATURE_SIZE);
+    else
+    {
+        PT_DELTA new_delta = offset - entry->last_offset;
+        ST_SIGNATURE new_signature = generate_signature(entry->signature, new_delta);
+        entry->signature = LRB_MASK(new_signature, ST_SIGNATURE_SIZE);
+    }
     entry->last_offset = LRB_MASK(offset, ST_LAST_OFFSET_SIZE);
-
     update_lru_by_touch(entry);
 }
 
