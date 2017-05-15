@@ -14,5 +14,5 @@ all: *.c
 	@echo "Done!"
 
 clean:
-	rm *.o
-	rm dpc2sim
+	rm -f *.o
+	rm -f dpc2sim_spp

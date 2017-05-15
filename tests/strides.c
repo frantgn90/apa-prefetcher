@@ -25,12 +25,15 @@ int main()
     int stride_i=0;
     int access_i=0;
 
+    int res=0;
     for (i=0; i<N_ACCESSES; ++i)
     {
         int value = VALUES[access_i];
 
         access_i = ((access_i+STRIDES[stride_i])*(BLOCK_SIZE/sizeof(int)))%N_VALUES;
         stride_i = (stride_i+1)%N_STRIDE;
+
+        VALUES[access_i]=value;
     }
 
 }

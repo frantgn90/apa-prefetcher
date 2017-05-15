@@ -1,7 +1,6 @@
-INTRODUCTION
-============
 Prefetcher based on publication "Path Confidence Lookahead Prefetching", Kim et al.
 
 How to compile
 ==============
-Just tipe `make`
+If you uncompress this package just into the APA simulator framework just tipe `make`,
+if not, please put the correct path at Makefile
